@@ -12,23 +12,33 @@
     color: #fff;
     min-height: 100vh;
     padding: 20px;
+    overflow-x: hidden;
   }
-  .container { max-width: 500px; margin: 0 auto; }
+  .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 2; }
+
   h1 {
     text-align: center;
     color: #ff2d2d;
-    text-shadow: 0 0 10px #ff2d2d;
+    text-shadow: 0 0 10px #ff2d2d, 0 0 20px #ff2d2d, 0 0 40px #ff0000;
     margin-bottom: 20px;
     letter-spacing: 2px;
+    animation: glowTitle 2s ease-in-out infinite alternate;
   }
-  .login-box, .game-box {
+  @keyframes glowTitle {
+    from { text-shadow: 0 0 10px #ff2d2d, 0 0 20px #ff2d2d; }
+    to { text-shadow: 0 0 20px #ff2d2d, 0 0 40px #ff0000, 0 0 60px #ff0000; }
+  }
+
+  .login-box, .game-box, .prize-box {
     background: rgba(20, 0, 0, 0.8);
     border: 1px solid #ff2d2d;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 0 20px rgba(255, 45, 45, 0.3);
+    backdrop-filter: blur(10px);
   }
+
   label {
     display: block;
     font-size: 12px;
@@ -37,6 +47,7 @@
     margin-bottom: 8px;
     margin-top: 12px;
   }
+
   input {
     width: 100%;
     padding: 12px;
@@ -46,8 +57,10 @@
     color: #fff;
     font-size: 14px;
     outline: none;
+    transition: 0.3s;
   }
-  input:focus { box-shadow: 0 0 10px #ff2d2d; }
+  input:focus { box-shadow: 0 0 15px #ff2d2d; border-color: #ff6b6b; }
+
   button {
     width: 100%;
     padding: 14px;
@@ -60,10 +73,15 @@
     letter-spacing: 2px;
     cursor: pointer;
     font-size: 14px;
+    transition: 0.3s;
   }
-  button:hover { opacity: 0.9; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(255, 45, 45, 0.6);
+  }
+
   .hidden { display: none; }
+
   .stats {
     display: flex;
     justify-content: space-between;
@@ -73,17 +91,20 @@
   .stats div { flex: 1; }
   .stats span {
     display: block;
-    font-size: 20px;
+    font-size: 22px;
     color: #ff2d2d;
     font-weight: bold;
+    text-shadow: 0 0 10px #ff2d2d;
   }
   .stats small { font-size: 10px; color: #ff6b6b; letter-spacing: 1px; }
+
   .board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 15px;
     margin-top: 20px;
   }
+
   .ball {
     aspect-ratio: 1;
     border-radius: 50%;
@@ -92,32 +113,135 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
     cursor: pointer;
     transition: 0.3s;
+    position: relative;
+    animation: pulseBall 2s ease-in-out infinite;
   }
-  .ball:hover { transform: scale(1.05); }
+  @keyframes pulseBall {
+    0%, 100% { box-shadow: 0 0 10px #ff2d2d; }
+    50% { box-shadow: 0 0 25px #ff2d2d, 0 0 40px #ff0000; }
+  }
+  .ball:hover:not(.opened) {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px #ff2d2d, 0 0 50px #ff0000;
+  }
   .ball.opened {
     background: radial-gradient(circle at 30% 30%, #444, #111);
     border-color: #333;
     cursor: default;
-    font-size: 12px;
+    font-size: 11px;
     text-align: center;
     padding: 5px;
+    animation: none;
+    font-weight: bold;
   }
-  .ball.opened.win { border-color: gold; box-shadow: 0 0 15px gold; }
+  .ball.opened.win {
+    border-color: gold;
+    box-shadow: 0 0 20px gold, 0 0 40px gold;
+    animation: pop 0.5s ease;
+  }
+  .ball.opened.lose {
+    opacity: 0.5;
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  .shake { animation: shake 0.4s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
   .log {
     margin-top: 20px;
     font-size: 13px;
     max-height: 150px;
     overflow-y: auto;
   }
-  .log p { padding: 5px 0; border-bottom: 1px solid #330000; }
-  .log .win { color: gold; }
+  .log p {
+    padding: 5px 0;
+    border-bottom: 1px solid #330000;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .log .win { color: gold; text-shadow: 0 0 5px gold; }
   .log .lose { color: #888; }
+
+  /* PRIZE POOL */
+  .prize-box h2 {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #ff6b6b;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .prize-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .prize-item {
+    background: rgba(255, 45, 45, 0.1);
+    border-left: 3px solid #ff2d2d;
+    padding: 8px 10px;
+    border-radius: 4px;
+    transition: 0.3s;
+  }
+  .prize-item:hover {
+    background: rgba(255, 45, 45, 0.25);
+    transform: translateX(3px);
+  }
+  .prize-item.zonk { border-left-color: #555; color: #888; }
+
+  /* CONFETTI */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    z-index: 999;
+    pointer-events: none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* BINTANG BACKGROUND */
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: #ff2d2d;
+    border-radius: 50%;
+    animation: twinkle 3s infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; box-shadow: 0 0 6px #ff2d2d; }
+  }
 </style>
 </head>
 <body>
+
+<div class="stars" id="stars"></div>
+
 <div class="container">
   <h1>🎰 BOLA KEBERUNTUNGAN</h1>
 
@@ -144,6 +268,12 @@
 
     <div class="log" id="log"></div>
   </div>
+
+  <!-- PRIZE POOL -->
+  <div class="prize-box hidden" id="prizeBox">
+    <h2>🏆 PRIZE POOL</h2>
+    <div class="prize-list" id="prizeList"></div>
+  </div>
 </div>
 
 <script>
@@ -151,18 +281,31 @@
 const KODE_VALID = ["PELANGI01", "BOLA99", "AYAM777", "LUCKY123"];
 
 const HADIAH = [
-  "iPhone 17 Pro Max",
-  "Uang Tunai Rp 50.000",
-  "Uang Tunai Rp 20.000",
-  "Pulsa Rp 10.000",
-  "Voucher Rp 5.000",
-  "ZONK 😢",
-  "ZONK 😢"
+  { nama: "iPhone 17 Pro Max", nilai: 0 },
+  { nama: "Uang Tunai Rp 50.000", nilai: 50000 },
+  { nama: "Uang Tunai Rp 20.000", nilai: 20000 },
+  { nama: "Pulsa Rp 10.000", nilai: 10000 },
+  { nama: "Voucher Rp 5.000", nilai: 5000 },
+  { nama: "ZONK 😢", nilai: 0 },
+  { nama: "ZONK 😢", nilai: 0 }
 ];
 // ==========================
 
 let currentUser = "";
 let totalHadiah = 0;
+
+// Bikin bintang background
+(function createStars() {
+  const stars = document.getElementById("stars");
+  for (let i = 0; i < 40; i++) {
+    const s = document.createElement("div");
+    s.className = "star";
+    s.style.left = Math.random() * 100 + "%";
+    s.style.top = Math.random() * 100 + "%";
+    s.style.animationDelay = Math.random() * 3 + "s";
+    stars.appendChild(s);
+  }
+})();
 
 function login() {
   const user = document.getElementById("userId").value.trim();
@@ -184,7 +327,20 @@ function login() {
   currentUser = user;
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("gameBox").classList.remove("hidden");
+  document.getElementById("prizeBox").classList.remove("hidden");
   startGame();
+  renderPrizePool();
+}
+
+function renderPrizePool() {
+  const list = document.getElementById("prizeList");
+  list.innerHTML = "";
+  HADIAH.forEach(h => {
+    const item = document.createElement("div");
+    item.className = "prize-item" + (h.nama.startsWith("ZONK") ? " zonk" : "");
+    item.textContent = h.nama;
+    list.appendChild(item);
+  });
 }
 
 function startGame() {
@@ -212,21 +368,30 @@ function openBall(el, hadiah) {
   if (el.classList.contains("opened")) return;
 
   el.classList.add("opened");
+  el.parentElement.classList.add("shake");
+  setTimeout(() => el.parentElement.classList.remove("shake"), 400);
 
-  if (hadiah.startsWith("ZONK")) {
+  const isZonk = hadiah.nama.startsWith("ZONK");
+
+  if (isZonk) {
+    el.classList.add("lose");
     el.textContent = "ZONK";
     addLog(`${currentUser} dapat ZONK 😢`, "lose");
   } else {
     el.classList.add("win");
-    el.textContent = hadiah;
-    addLog(`${currentUser} menang: ${hadiah} 🎉`, "win");
+    el.textContent = hadiah.nama;
+    addLog(`${currentUser} menang: ${hadiah.nama} 🎉`, "win");
+    totalHadiah += hadiah.nilai;
+    document.getElementById("totalHadiah").textContent =
+      "Rp " + totalHadiah.toLocaleString("id-ID");
+    fireConfetti();
   }
 
   const sisa = document.querySelectorAll(".ball:not(.opened)").length;
   document.getElementById("sisaBola").textContent = sisa;
 
   if (sisa === 0) {
-    addLog("Permainan selesai!", "win");
+    addLog("🏁 Permainan selesai!", "win");
   }
 }
 
@@ -236,6 +401,22 @@ function addLog(text, type) {
   p.textContent = text;
   p.className = type;
   log.prepend(p);
+}
+
+// CONFETTI
+function fireConfetti() {
+  const colors = ["#ff2d2d", "#ff6b00", "#ffd700", "#fff", "#ff0000"];
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (Math.random() * 2 + 2) + "s";
+    c.style.animationDelay = Math.random() * 0.3 + "s";
+    if (Math.random() > 0.5) c.style.borderRadius = "50%";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
 }
 </script>
 </body>
