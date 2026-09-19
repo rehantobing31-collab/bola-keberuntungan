@@ -4,6 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bola Keberuntungan</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAC3a-SLKPCFFxuI1PyreSgxESJn9rioVc",
+    authDomain: "bola-keberuntungan.firebaseapp.com",
+    projectId: "bola-keberuntungan",
+    storageBucket: "bola-keberuntungan.firebasestorage.app",
+    messagingSenderId: "743466113799",
+    appId: "1:743466113799:web:d7a3aa7bb0478bb33143a2"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.firebaseDB = db;
+  window.firebaseFns = { collection, getDocs };
+</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -15,7 +34,6 @@
     overflow-x: hidden;
   }
   .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 2; }
-
   h1 {
     text-align: center;
     color: #ff2d2d;
@@ -28,7 +46,6 @@
     from { text-shadow: 0 0 10px #ff2d2d, 0 0 20px #ff2d2d; }
     to { text-shadow: 0 0 20px #ff2d2d, 0 0 40px #ff0000, 0 0 60px #ff0000; }
   }
-
   .login-box, .game-box, .prize-box {
     background: rgba(20, 0, 0, 0.8);
     border: 1px solid #ff2d2d;
@@ -38,7 +55,6 @@
     box-shadow: 0 0 20px rgba(255, 45, 45, 0.3);
     backdrop-filter: blur(10px);
   }
-
   label {
     display: block;
     font-size: 12px;
@@ -47,7 +63,6 @@
     margin-bottom: 8px;
     margin-top: 12px;
   }
-
   input {
     width: 100%;
     padding: 12px;
@@ -60,7 +75,6 @@
     transition: 0.3s;
   }
   input:focus { box-shadow: 0 0 15px #ff2d2d; border-color: #ff6b6b; }
-
   button {
     width: 100%;
     padding: 14px;
@@ -79,9 +93,7 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 20px rgba(255, 45, 45, 0.6);
   }
-
   .hidden { display: none; }
-
   .stats {
     display: flex;
     justify-content: space-between;
@@ -97,14 +109,12 @@
     text-shadow: 0 0 10px #ff2d2d;
   }
   .stats small { font-size: 10px; color: #ff6b6b; letter-spacing: 1px; }
-
   .board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     margin-top: 20px;
   }
-
   .ball {
     aspect-ratio: 1;
     border-radius: 50%;
@@ -142,22 +152,18 @@
     box-shadow: 0 0 20px gold, 0 0 40px gold;
     animation: pop 0.5s ease;
   }
-  .ball.opened.lose {
-    opacity: 0.5;
-  }
+  .ball.opened.lose { opacity: 0.5; }
   @keyframes pop {
     0% { transform: scale(1); }
     50% { transform: scale(1.3); }
     100% { transform: scale(1); }
   }
-
   .shake { animation: shake 0.4s; }
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
   }
-
   .log {
     margin-top: 20px;
     font-size: 13px;
@@ -175,8 +181,6 @@
   }
   .log .win { color: gold; text-shadow: 0 0 5px gold; }
   .log .lose { color: #888; }
-
-  /* PRIZE POOL */
   .prize-box h2 {
     font-size: 14px;
     letter-spacing: 2px;
@@ -202,8 +206,6 @@
     transform: translateX(3px);
   }
   .prize-item.zonk { border-left-color: #555; color: #888; }
-
-  /* CONFETTI */
   .confetti {
     position: fixed;
     width: 10px;
@@ -216,8 +218,6 @@
   @keyframes fall {
     to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
   }
-
-  /* BINTANG BACKGROUND */
   .stars {
     position: fixed;
     top: 0; left: 0;
@@ -245,7 +245,6 @@
 <div class="container">
   <h1>🎰 BOLA KEBERUNTUNGAN</h1>
 
-  <!-- LOGIN -->
   <div class="login-box" id="loginBox">
     <label>USER ID PEMAIN</label>
     <input type="text" id="userId" placeholder="Masukan User ID">
@@ -257,19 +256,15 @@
     <p id="loginMsg" style="margin-top:10px; font-size:12px; text-align:center;"></p>
   </div>
 
-  <!-- GAME -->
   <div class="game-box hidden" id="gameBox">
     <div class="stats">
       <div><small>HADIAH DIDAPAT</small><span id="totalHadiah">Rp 0</span></div>
       <div><small>SISA BOLA</small><span id="sisaBola">3</span></div>
     </div>
-
     <div class="board" id="board"></div>
-
     <div class="log" id="log"></div>
   </div>
 
-  <!-- PRIZE POOL -->
   <div class="prize-box hidden" id="prizeBox">
     <h2>🏆 PRIZE POOL</h2>
     <div class="prize-list" id="prizeList"></div>
@@ -277,24 +272,11 @@
 </div>
 
 <script>
-// ====== ATUR DI SINI ======
-const KODE_VALID = ["PELANGI01", "BOLA99", "AYAM777", "LUCKY123"];
-
-const HADIAH = [
-  { nama: "iPhone 17 Pro Max", nilai: 0 },
-  { nama: "Uang Tunai Rp 50.000", nilai: 50000 },
-  { nama: "Uang Tunai Rp 20.000", nilai: 20000 },
-  { nama: "Pulsa Rp 10.000", nilai: 10000 },
-  { nama: "Voucher Rp 5.000", nilai: 5000 },
-  { nama: "ZONK 😢", nilai: 0 },
-  { nama: "ZONK 😢", nilai: 0 }
-];
-// ==========================
-
+let KODE_VALID = [];
+let HADIAH = [];
 let currentUser = "";
 let totalHadiah = 0;
 
-// Bikin bintang background
 (function createStars() {
   const stars = document.getElementById("stars");
   for (let i = 0; i < 40; i++) {
@@ -306,6 +288,28 @@ let totalHadiah = 0;
     stars.appendChild(s);
   }
 })();
+
+async function loadDataFromFirebase() {
+  try {
+    const db = window.firebaseDB;
+    const { collection, getDocs } = window.firebaseFns;
+
+    const hadiahSnap = await getDocs(collection(db, "hadiah"));
+    HADIAH = [];
+    hadiahSnap.forEach(doc => HADIAH.push(doc.data()));
+
+    const kodeSnap = await getDocs(collection(db, "kode"));
+    KODE_VALID = [];
+    kodeSnap.forEach(doc => KODE_VALID.push(doc.data().token));
+
+    console.log("Hadiah loaded:", HADIAH);
+    console.log("Kode loaded:", KODE_VALID);
+  } catch (err) {
+    console.error("Gagal load Firebase:", err);
+  }
+}
+
+loadDataFromFirebase();
 
 function login() {
   const user = document.getElementById("userId").value.trim();
@@ -366,7 +370,6 @@ function startGame() {
 
 function openBall(el, hadiah) {
   if (el.classList.contains("opened")) return;
-
   el.classList.add("opened");
   el.parentElement.classList.add("shake");
   setTimeout(() => el.parentElement.classList.remove("shake"), 400);
@@ -381,7 +384,7 @@ function openBall(el, hadiah) {
     el.classList.add("win");
     el.textContent = hadiah.nama;
     addLog(`${currentUser} menang: ${hadiah.nama} 🎉`, "win");
-    totalHadiah += hadiah.nilai;
+    totalHadiah += hadiah.nilai || 0;
     document.getElementById("totalHadiah").textContent =
       "Rp " + totalHadiah.toLocaleString("id-ID");
     fireConfetti();
@@ -389,10 +392,7 @@ function openBall(el, hadiah) {
 
   const sisa = document.querySelectorAll(".ball:not(.opened)").length;
   document.getElementById("sisaBola").textContent = sisa;
-
-  if (sisa === 0) {
-    addLog("🏁 Permainan selesai!", "win");
-  }
+  if (sisa === 0) addLog("🏁 Permainan selesai!", "win");
 }
 
 function addLog(text, type) {
@@ -403,7 +403,6 @@ function addLog(text, type) {
   log.prepend(p);
 }
 
-// CONFETTI
 function fireConfetti() {
   const colors = ["#ff2d2d", "#ff6b00", "#ffd700", "#fff", "#ff0000"];
   for (let i = 0; i < 40; i++) {
