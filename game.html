@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bola Keberuntungan</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Arial', sans-serif;
+    background: radial-gradient(circle at top, #1a0000, #000);
+    color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 500px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    color: #ff2d2d;
+    text-shadow: 0 0 10px #ff2d2d;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+  .login-box, .game-box {
+    background: rgba(20, 0, 0, 0.8);
+    border: 1px solid #ff2d2d;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px rgba(255, 45, 45, 0.3);
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #ff6b6b;
+    margin-bottom: 8px;
+    margin-top: 12px;
+  }
+  input {
+    width: 100%;
+    padding: 12px;
+    background: #0d0000;
+    border: 1px solid #ff2d2d;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+  }
+  input:focus { box-shadow: 0 0 10px #ff2d2d; }
+  button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    background: linear-gradient(90deg, #ff2d2d, #ff6b00);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover { opacity: 0.9; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .hidden { display: none; }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  .stats div { flex: 1; }
+  .stats span {
+    display: block;
+    font-size: 20px;
+    color: #ff2d2d;
+    font-weight: bold;
+  }
+  .stats small { font-size: 10px; color: #ff6b6b; letter-spacing: 1px; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .ball {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff6b6b, #800000);
+    border: 2px solid #ff2d2d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .ball:hover { transform: scale(1.05); }
+  .ball.opened {
+    background: radial-gradient(circle at 30% 30%, #444, #111);
+    border-color: #333;
+    cursor: default;
+    font-size: 12px;
+    text-align: center;
+    padding: 5px;
+  }
+  .ball.opened.win { border-color: gold; box-shadow: 0 0 15px gold; }
+  .log {
+    margin-top: 20px;
+    font-size: 13px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .log p { padding: 5px 0; border-bottom: 1px solid #330000; }
+  .log .win { color: gold; }
+  .log .lose { color: #888; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎰 BOLA KEBERUNTUNGAN</h1>
+
+  <!-- LOGIN -->
+  <div class="login-box" id="loginBox">
+    <label>USER ID PEMAIN</label>
+    <input type="text" id="userId" placeholder="Masukan User ID">
+
+    <label>KODE TOKEN AKSES</label>
+    <input type="text" id="token" placeholder="Masukan Kode Tiket">
+
+    <button onclick="login()">MASUK</button>
+    <p id="loginMsg" style="margin-top:10px; font-size:12px; text-align:center;"></p>
+  </div>
+
+  <!-- GAME -->
+  <div class="game-box hidden" id="gameBox">
+    <div class="stats">
+      <div><small>HADIAH DIDAPAT</small><span id="totalHadiah">Rp 0</span></div>
+      <div><small>SISA BOLA</small><span id="sisaBola">3</span></div>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+// ====== ATUR DI SINI ======
+const KODE_VALID = ["PELANGI01", "BOLA99", "AYAM777", "LUCKY123"];
+
+const HADIAH = [
+  "iPhone 17 Pro Max",
+  "Uang Tunai Rp 50.000",
+  "Uang Tunai Rp 20.000",
+  "Pulsa Rp 10.000",
+  "Voucher Rp 5.000",
+  "ZONK 😢",
+  "ZONK 😢"
+];
+// ==========================
+
+let currentUser = "";
+let totalHadiah = 0;
+
+function login() {
+  const user = document.getElementById("userId").value.trim();
+  const token = document.getElementById("token").value.trim();
+  const msg = document.getElementById("loginMsg");
+
+  if (!user || !token) {
+    msg.style.color = "#ff2d2d";
+    msg.textContent = "Isi User ID dan Kode Tiket dulu!";
+    return;
+  }
+
+  if (!KODE_VALID.includes(token)) {
+    msg.style.color = "#ff2d2d";
+    msg.textContent = "Kode Tiket salah / tidak valid!";
+    return;
+  }
+
+  currentUser = user;
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("gameBox").classList.remove("hidden");
+  startGame();
+}
+
+function startGame() {
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  totalHadiah = 0;
+
+  const pool = [...HADIAH].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  pool.forEach((hadiah) => {
+    const ball = document.createElement("div");
+    ball.className = "ball";
+    ball.textContent = "❓";
+    ball.onclick = () => openBall(ball, hadiah);
+    board.appendChild(ball);
+  });
+
+  document.getElementById("totalHadiah").textContent = "Rp 0";
+  document.getElementById("sisaBola").textContent = "3";
+  document.getElementById("log").innerHTML = "";
+  addLog(`Selamat datang, ${currentUser}!`, "win");
+}
+
+function openBall(el, hadiah) {
+  if (el.classList.contains("opened")) return;
+
+  el.classList.add("opened");
+
+  if (hadiah.startsWith("ZONK")) {
+    el.textContent = "ZONK";
+    addLog(`${currentUser} dapat ZONK 😢`, "lose");
+  } else {
+    el.classList.add("win");
+    el.textContent = hadiah;
+    addLog(`${currentUser} menang: ${hadiah} 🎉`, "win");
+  }
+
+  const sisa = document.querySelectorAll(".ball:not(.opened)").length;
+  document.getElementById("sisaBola").textContent = sisa;
+
+  if (sisa === 0) {
+    addLog("Permainan selesai!", "win");
+  }
+}
+
+function addLog(text, type) {
+  const log = document.getElementById("log");
+  const p = document.createElement("p");
+  p.textContent = text;
+  p.className = type;
+  log.prepend(p);
+}
+</script>
+</body>
+</html>
