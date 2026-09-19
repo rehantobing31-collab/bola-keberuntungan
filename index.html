@@ -309,7 +309,7 @@ async function loadDataFromFirebase() {
   }
 }
 
-loadDataFromFirebase();
+window.addEventListener("load", loadDataFromFirebase);
 
 function login() {
   const user = document.getElementById("userId").value.trim();
